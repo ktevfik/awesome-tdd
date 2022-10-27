@@ -9,7 +9,8 @@ import java.math.BigDecimal;
  * @created 27/10/2022 - 00:28
  */
 @Builder
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class CreateOrderRequest {

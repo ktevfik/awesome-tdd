@@ -12,8 +12,8 @@ import java.math.BigDecimal;
 @Data
 @Builder
 public class OrderDto {
+
     private BigDecimal totalPrice;
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
-    }
+
+    private Integer id;
 }
