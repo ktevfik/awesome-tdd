@@ -23,9 +23,18 @@ public class ProductService {
 
     public ProductDto createProduct(CreateProductRequest createProductRequest) {
         Integer totalPrice = createProductRequest.getUnitPrice() * createProductRequest.getAmount();
-        Product order = Product.builder().id(32).totalPrice(totalPrice).build();
-        this.paymentClient.pay(order);
-        Product save = productRepository.save(order);
-        return ProductDto.builder().id(save.getId()).totalPrice(totalPrice).build();
+        Product product = Product.builder()
+                .unitPrice(createProductRequest.getUnitPrice())
+                .amount(createProductRequest.getAmount())
+                .totalPrice(totalPrice)
+                .build();
+        this.paymentClient.pay(product);
+        Product save = productRepository.save(product);
+        return ProductDto.builder()
+                .id(save.getId())
+                .unitPrice(createProductRequest.getUnitPrice())
+                .amount(createProductRequest.getAmount())
+                .totalPrice(totalPrice)
+                .build();
     }
 }

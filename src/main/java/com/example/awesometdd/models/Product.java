@@ -24,6 +24,8 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    private Integer unitPrice;
+    private Integer amount;
     private Integer totalPrice;
 
 }

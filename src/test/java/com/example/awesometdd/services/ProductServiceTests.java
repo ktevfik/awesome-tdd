@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,74 +42,152 @@ public class ProductServiceTests {
 
     public static Stream<Arguments> product_requests() { /*MethodSource*/
         return Stream.of(
-                Arguments.of("code1", 5, 13, 65,
-                        Arguments.of("code2", 10, 15, 150)));
+                Arguments.of("code1", 5, 13, 65), // Removed duplicate Arguments.of
+                Arguments.of("code2", 10, 15, 150)
+        );
     }
 
     @Test
-    public void it_should_create_product_with_5_items(){
+    public void it_should_create_product_with_5_items() {
         // given
+        final int expectedId = 1;
         CreateProductRequest request = CreateProductRequest.builder()
                 .productCode("code1")
                 .amount(5)
                 .unitPrice(13)
                 .build();
+        Integer expectedTotalPrice = request.getUnitPrice() * request.getAmount();
+
+        Product savedProduct = Product.builder()
+                .id(expectedId)
+                .unitPrice(request.getUnitPrice())
+                .amount(request.getAmount())
+                .totalPrice(expectedTotalPrice)
+                .build();
+        when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
 
         // when
-        Product product = new Product();
-        when(productRepository.save(any())).thenReturn(product);
         ProductDto productDto = productService.createProduct(request);
 
         // then
-        then(productDto).isNotNull();   /*test 1*/
-        then(productDto.getTotalPrice()).isEqualTo(65); /* test2*/
+        ArgumentCaptor<Product> productCaptorForPay = ArgumentCaptor.forClass(Product.class);
+        verify(paymentClient).pay(productCaptorForPay.capture());
+        Product capturedProductForPay = productCaptorForPay.getValue();
+        then(capturedProductForPay.getId()).isNull();
+        then(capturedProductForPay.getUnitPrice()).isEqualTo(request.getUnitPrice());
+        then(capturedProductForPay.getAmount()).isEqualTo(request.getAmount());
+        then(capturedProductForPay.getTotalPrice()).isEqualTo(expectedTotalPrice);
 
+        ArgumentCaptor<Product> productCaptorForSave = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptorForSave.capture());
+        Product capturedProductForSave = productCaptorForSave.getValue();
+        then(capturedProductForSave.getId()).isNull();
+        then(capturedProductForSave.getUnitPrice()).isEqualTo(request.getUnitPrice());
+        then(capturedProductForSave.getAmount()).isEqualTo(request.getAmount());
+        then(capturedProductForSave.getTotalPrice()).isEqualTo(expectedTotalPrice);
+
+        then(productDto).isNotNull();
+        then(productDto.getId()).isEqualTo(expectedId);
+        then(productDto.getUnitPrice()).isEqualTo(request.getUnitPrice());
+        then(productDto.getAmount()).isEqualTo(request.getAmount());
+        then(productDto.getTotalPrice()).isEqualTo(expectedTotalPrice);
     }
 
     @Test
-    public void it_should_create_order_with_10_items(){
+    public void it_should_create_order_with_10_items() {
         // given
+        final int expectedId = 2; // Using a different ID for variety
         CreateProductRequest request = CreateProductRequest.builder()
-                .productCode("code1")
+                .productCode("code2") // Corrected product code
                 .amount(10)
                 .unitPrice(15)
                 .build();
+        Integer expectedTotalPrice = request.getUnitPrice() * request.getAmount();
+
+        Product savedProduct = Product.builder()
+                .id(expectedId)
+                .unitPrice(request.getUnitPrice())
+                .amount(request.getAmount())
+                .totalPrice(expectedTotalPrice)
+                .build();
+        when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
 
         // when
-        Product product = new Product();
-        when(productRepository.save(any())).thenReturn(product);
         ProductDto productDto = productService.createProduct(request);
 
         // then
-        then(productDto).isNotNull();   /*test 3*/
-        then(productDto.getTotalPrice()).isEqualTo(150); /* test4*/
+        ArgumentCaptor<Product> productCaptorForPay = ArgumentCaptor.forClass(Product.class);
+        verify(paymentClient).pay(productCaptorForPay.capture());
+        Product capturedProductForPay = productCaptorForPay.getValue();
+        then(capturedProductForPay.getId()).isNull();
+        then(capturedProductForPay.getUnitPrice()).isEqualTo(request.getUnitPrice());
+        then(capturedProductForPay.getAmount()).isEqualTo(request.getAmount());
+        then(capturedProductForPay.getTotalPrice()).isEqualTo(expectedTotalPrice);
 
+        ArgumentCaptor<Product> productCaptorForSave = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptorForSave.capture());
+        Product capturedProductForSave = productCaptorForSave.getValue();
+        then(capturedProductForSave.getId()).isNull();
+        then(capturedProductForSave.getUnitPrice()).isEqualTo(request.getUnitPrice());
+        then(capturedProductForSave.getAmount()).isEqualTo(request.getAmount());
+        then(capturedProductForSave.getTotalPrice()).isEqualTo(expectedTotalPrice);
+
+        then(productDto).isNotNull();
+        then(productDto.getId()).isEqualTo(expectedId);
+        then(productDto.getUnitPrice()).isEqualTo(request.getUnitPrice());
+        then(productDto.getAmount()).isEqualTo(request.getAmount());
+        then(productDto.getTotalPrice()).isEqualTo(expectedTotalPrice);
     }
 
     @ParameterizedTest
-    @MethodSource("product_requests") //order_requests adında yukarıda olusturup argümanları yukarıda belirledik.
+    @MethodSource("product_requests")
     public void it_should_create_orders(String productCode, Integer amount, Integer unitPrice,
-                                        Integer totalPrice){ // buraya methodSource icerisinde olusturduğumuz argümanların
-        // degiskenlerini geciyoruz.(adını)
+                                        Integer expectedTotalPrice) {
         //given
+        final int expectedId = 3; // Using a different ID for variety
         CreateProductRequest request = CreateProductRequest.builder()
                 .productCode(productCode)
                 .unitPrice(unitPrice)
                 .amount(amount)
                 .build();
 
-        Product product = new Product();
-        when(productRepository.save(any())).thenReturn(product);
+        Product savedProduct = Product.builder()
+                .id(expectedId)
+                .unitPrice(request.getUnitPrice())
+                .amount(request.getAmount())
+                .totalPrice(expectedTotalPrice)
+                .build();
+        when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
 
         //when
-        ProductDto productDto = productService.createProduct(request);  /*OrderDto order = local variable.*/
+        ProductDto productDto = productService.createProduct(request);
 
         //then
-        then(productDto.getTotalPrice()).isEqualTo(totalPrice);
+        ArgumentCaptor<Product> productCaptorForPay = ArgumentCaptor.forClass(Product.class);
+        verify(paymentClient).pay(productCaptorForPay.capture());
+        Product capturedProductForPay = productCaptorForPay.getValue();
+        then(capturedProductForPay.getId()).isNull();
+        then(capturedProductForPay.getUnitPrice()).isEqualTo(request.getUnitPrice());
+        then(capturedProductForPay.getAmount()).isEqualTo(request.getAmount());
+        then(capturedProductForPay.getTotalPrice()).isEqualTo(expectedTotalPrice);
+
+        ArgumentCaptor<Product> productCaptorForSave = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptorForSave.capture());
+        Product capturedProductForSave = productCaptorForSave.getValue();
+        then(capturedProductForSave.getId()).isNull();
+        then(capturedProductForSave.getUnitPrice()).isEqualTo(request.getUnitPrice());
+        then(capturedProductForSave.getAmount()).isEqualTo(request.getAmount());
+        then(capturedProductForSave.getTotalPrice()).isEqualTo(expectedTotalPrice);
+
+        then(productDto).isNotNull();
+        then(productDto.getId()).isEqualTo(expectedId);
+        then(productDto.getUnitPrice()).isEqualTo(request.getUnitPrice());
+        then(productDto.getAmount()).isEqualTo(request.getAmount());
+        then(productDto.getTotalPrice()).isEqualTo(expectedTotalPrice);
     }
 
     @Test
-    public void it_should_fail_order_creation_when_payment_failed(){
+    public void it_should_fail_order_creation_when_payment_failed() {
         //given
         CreateProductRequest request = CreateProductRequest.builder()
                 .productCode("code1")
@@ -117,13 +196,14 @@ public class ProductServiceTests {
                 .build();
 
         //when
-        doThrow(new IllegalArgumentException()).when(paymentClient).pay(any()); /*doThrow1*/
+        // Ensure Product class is used for type matching if service method expects Product
+        doThrow(new IllegalArgumentException()).when(paymentClient).pay(any(Product.class));
 
-        Throwable throwable = catchThrowable(() -> { productService.createProduct(request);}); /*burada cıktıyı alıp.*/
+        Throwable throwable = catchThrowable(() -> productService.createProduct(request));
 
         //then
-        then(throwable).isInstanceOf(IllegalArgumentException.class); // burada illegalexception alması gerek.
-        verifyNoInteractions(productRepository); /*veriyf1*/
+        then(throwable).isInstanceOf(IllegalArgumentException.class);
+        verifyNoInteractions(productRepository);
     }
 }
 
