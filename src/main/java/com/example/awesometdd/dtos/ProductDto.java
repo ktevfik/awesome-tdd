@@ -1,7 +1,9 @@
 package com.example.awesometdd.dtos;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Tevfik Kadan
@@ -9,9 +11,12 @@ import lombok.Data;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductDto {
 
-    private Integer totalPrice;
-
     private Integer id;
+    private Integer unitPrice;
+    private Integer amount;
+    private Integer totalPrice;
 }
